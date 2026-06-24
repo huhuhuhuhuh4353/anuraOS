@@ -25,6 +25,7 @@
 		"launcher-keybind": true,
 		"relay-url": "wss://relay.widgetry.org/"
 	},
+	"wispUrl": "wss://anura.pro/",
 	"x86": {
 		"alpine": {
 			"bzimage": "/x86images/alpine-boot/vmlinuz-virt",
