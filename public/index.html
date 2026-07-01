@@ -103,6 +103,7 @@
 		<script type="text/javascript" src="/lib/coreapps/ShortcutApp.js"></script>
 		<script type="text/javascript" src="/lib/coreapps/GenericApp.js"></script>
 		<script type="text/javascript" src="/lib/coreapps/ExternalApp.js"></script>
+		<script type="text/javascript" src="/lib/coreapps/ExternalApp.js"></script>
 
 		<script type="text/javascript" src="/lib/coreapps/ExploreApp.js"></script>
 		<script type="text/javascript" src="/lib/coreapps/RecoveryApp.js"></script>
@@ -135,6 +136,68 @@
 		<script type="text/javascript" src="/lib/Boot.js"></script>
 		<!-- <script type="text/javascript" src="/dist.js"></script> -->
 		<!-- prod only ^ -->
+
+		<!-- App embed helper: provides proxiedUrl() and createAppObjectWindow() -->
+		<script>
+		(function(){
+			const PROXY_PREFIX = 'https://corsproxy.io/?';
+			function proxiedUrl(rawUrl){
+				if(!rawUrl) return rawUrl;
+				if(rawUrl.startsWith(PROXY_PREFIX)) return rawUrl;
+				try{ return PROXY_PREFIX + encodeURIComponent(rawUrl); }catch(e){ return PROXY_PREFIX + rawUrl; }
+			}
+
+			function createAppObjectWindow(rawUrl, container){
+				if(!container) throw new Error('createAppObjectWindow requires a container element');
+				const url = proxiedUrl(rawUrl);
+				while(container.firstChild) container.removeChild(container.firstChild);
+				if(getComputedStyle(container).position === 'static') container.style.position = 'relative';
+
+				const obj = document.createElement('object');
+				obj.setAttribute('type','text/html');
+				obj.setAttribute('data', url);
+				obj.setAttribute('aria-label','App web view');
+				obj.style.display = 'block';
+				obj.style.width = '100%';
+				obj.style.height = '100%';
+				obj.style.border = '0';
+				obj.style.background = 'transparent';
+				obj.style.overflow = 'hidden';
+				obj.className = 'anura-app-object';
+
+				const loader = document.createElement('div');
+				loader.textContent = 'Loading…';
+				loader.style.position = 'absolute';
+				loader.style.left = '50%';
+				loader.style.top = '50%';
+				loader.style.transform = 'translate(-50%, -50%)';
+				loader.style.color = '#ccc';
+				loader.style.pointerEvents = 'none';
+
+				container.appendChild(obj);
+				container.appendChild(loader);
+
+				obj.addEventListener('load', function(){ if(loader.parentNode) loader.parentNode.removeChild(loader); });
+				obj.addEventListener('error', function(e){
+					if(loader.parentNode) loader.parentNode.removeChild(loader);
+					const err = document.createElement('div');
+					err.textContent = 'Unable to load app content.';
+					err.style.color = '#f88';
+					err.style.position = 'absolute';
+					err.style.left = '50%';
+					err.style.top = '50%';
+					err.style.transform = 'translate(-50%, -50%)';
+					container.appendChild(err);
+					console.error('App object load error for', url, e);
+				});
+
+				return obj;
+			}
+
+			window.proxiedUrl = proxiedUrl;
+			window.createAppObjectWindow = createAppObjectWindow;
+		})();
+		</script>
 
 		<style>
 			html, body {
